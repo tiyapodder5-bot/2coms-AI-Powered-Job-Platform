@@ -18,7 +18,10 @@ import {
   MessageSquare,
   TrendingUp,
   CheckCircle,
-  XCircle
+  XCircle,
+  StickyNote,
+  Send,
+  Trash2
 } from 'lucide-react'
 
 function CandidateDetail() {
@@ -27,6 +30,8 @@ function CandidateDetail() {
   const [candidate, setCandidate] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [newNote, setNewNote] = useState('')
+  const [addingNote, setAddingNote] = useState(false)
 
   useEffect(() => {
     // Check authentication
@@ -55,6 +60,43 @@ function CandidateDetail() {
       setError(err.response?.data?.message || 'Failed to fetch candidate details')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return
+
+    setAddingNote(true)
+    try {
+      const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      
+      const response = await axios.post(
+        `${API_URL}/recruiter/${id}/notes`,
+        { text: newNote },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        // Add the new note to local state
+        const newNoteObj = {
+          text: newNote,
+          addedBy: {
+            _id: user.id,
+            name: user.name || user.email
+          },
+          createdAt: new Date().toISOString()
+        }
+        setCandidate(prev => ({
+          ...prev,
+          notes: [...(prev.notes || []), newNoteObj]
+        }))
+        setNewNote('')
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add note')
+    } finally {
+      setAddingNote(false)
     }
   }
 
@@ -382,6 +424,64 @@ function CandidateDetail() {
                     {new Date(candidate.createdAt).toLocaleDateString()}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <StickyNote className="w-5 h-5 text-blue-600" />
+                Recruiter Notes
+              </h3>
+
+              {/* Add Note Form */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddNote()}
+                    placeholder="Add a note about this candidate..."
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={addingNote}
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={addingNote || !newNote.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Notes List */}
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {candidate.notes && candidate.notes.length > 0 ? (
+                  candidate.notes.map((note, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <p className="text-sm text-gray-800 mb-2">{note.text}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span className="font-medium">
+                          By: {note.addedBy?.name || 'Unknown'}
+                        </span>
+                        <span>
+                          {new Date(note.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <StickyNote className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No notes yet. Add one above!</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -9,6 +9,8 @@ import JobDetails from './pages/JobDetails'
 import Login from './pages/Login'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import CandidateDetail from './pages/CandidateDetail'
+import JobPostForm from './pages/JobPostForm'
+import ShortlistedCandidates from './pages/ShortlistedCandidates'
 
 function App() {
   return (
@@ -24,6 +26,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
         <Route path="/recruiter/candidates/:id" element={<CandidateDetail />} />
+        <Route path="/recruiter/jobs/new" element={<JobPostForm />} />
+        <Route path="/recruiter/jobs/edit/:id" element={<JobPostForm />} />
+        <Route path="/recruiter/shortlisted" element={<ShortlistedCandidates />} />
       </Routes>
     </div>
   )

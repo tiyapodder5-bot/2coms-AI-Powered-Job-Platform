@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Upload, Home, ListFilter, LogIn, LogOut, LayoutDashboard } from 'lucide-react'
+import { Upload, Home, ListFilter, LogIn, LogOut, LayoutDashboard, Star, Briefcase } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 function Navbar() {
@@ -61,13 +61,31 @@ function Navbar() {
             )}
 
             {user && (user.role === 'employer' || user.role === 'admin') && (
-              <Link 
-                to="/recruiter/dashboard" 
-                className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
-              >
-                <LayoutDashboard className="w-5 h-5" />
-                <span className="font-medium hidden md:inline">Dashboard</span>
-              </Link>
+              <>
+                <Link 
+                  to="/recruiter/dashboard" 
+                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  <span className="font-medium hidden md:inline">Dashboard</span>
+                </Link>
+                
+                <Link 
+                  to="/recruiter/shortlisted" 
+                  className="flex items-center space-x-2 text-yellow-600 hover:text-yellow-700 transition-colors"
+                >
+                  <Star className="w-5 h-5" />
+                  <span className="font-medium hidden lg:inline">Shortlisted</span>
+                </Link>
+                
+                <Link 
+                  to="/recruiter/jobs/new" 
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Briefcase className="w-5 h-5" />
+                  <span className="font-medium hidden md:inline">Post Job</span>
+                </Link>
+              </>
             )}
 
             {user ? (

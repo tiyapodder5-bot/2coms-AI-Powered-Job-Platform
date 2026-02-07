@@ -18,7 +18,11 @@ import {
   Download,
   Eye,
   AlertCircle,
-  BarChart3
+  BarChart3,
+  CheckSquare,
+  Square,
+  GitCompare,
+  XCircle
 } from 'lucide-react'
 
 function RecruiterDashboard() {
@@ -29,6 +33,10 @@ function RecruiterDashboard() {
   const [error, setError] = useState('')
   const [filterOptions, setFilterOptions] = useState({})
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedForCompare, setSelectedForCompare] = useState([])
+  const [showCompareModal, setShowCompareModal] = useState(false)
+  const [comparisonData, setComparisonData] = useState(null)
+  const [updatingStatus, setUpdatingStatus] = useState({})
   const navigate = useNavigate()
 
   // Filter and sort state
@@ -151,6 +159,106 @@ function RecruiterDashboard() {
     })
     setLoading(true)
     setTimeout(() => fetchCandidates(), 100)
+  }
+
+  const handleStatusChange = async (candidateId, newStatus) => {
+    setUpdatingStatus(prev => ({ ...prev, [candidateId]: true }))
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.put(
+        `${API_URL}/recruiter/${candidateId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        // Update local state
+        setCandidates(prev =>
+          prev.map(c =>
+            c._id === candidateId
+              ? { ...c, applicationStatus: newStatus }
+              : c
+          )
+        )
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status')
+    } finally {
+      setUpdatingStatus(prev => ({ ...prev, [candidateId]: false }))
+    }
+  }
+
+  const handleShortlistToggle = async (candidateId, currentlyShortlisted) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.put(
+        `${API_URL}/recruiter/${candidateId}/shortlist`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        // Update local state
+        setCandidates(prev =>
+          prev.map(c =>
+            c._id === candidateId
+              ? { ...c, shortlisted: !currentlyShortlisted }
+              : c
+          )
+        )
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update shortlist')
+    }
+  }
+
+  const toggleCompareSelection = (candidateId) => {
+    setSelectedForCompare(prev => {
+      if (prev.includes(candidateId)) {
+        return prev.filter(id => id !== candidateId)
+      } else {
+        if (prev.length >= 5) {
+          alert('You can compare maximum 5 candidates at once')
+          return prev
+        }
+        return [...prev, candidateId]
+      }
+    })
+  }
+
+  const handleCompare = async () => {
+    if (selectedForCompare.length < 2) {
+      alert('Please select at least 2 candidates to compare')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.post(
+        `${API_URL}/recruiter/compare`,
+        { candidateIds: selectedForCompare },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        setComparisonData(response.data.data)
+        setShowCompareModal(true)
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to compare candidates')
+    }
+  }
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'Applied': 'bg-gray-100 text-gray-700 border-gray-300',
+      'Screening': 'bg-blue-100 text-blue-700 border-blue-300',
+      'Interview': 'bg-yellow-100 text-yellow-700 border-yellow-300',
+      'Offer': 'bg-purple-100 text-purple-700 border-purple-300',
+      'Hired': 'bg-green-100 text-green-700 border-green-300',
+      'Rejected': 'bg-red-100 text-red-700 border-red-300'
+    }
+    return colors[status] || colors['Applied']
   }
 
   const getScoreColor = (score) => {
@@ -463,46 +571,120 @@ function RecruiterDashboard() {
             <p className="text-gray-600">Try adjusting your filters to see more results</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {candidates.map((candidate, index) => {
-              const scoreBadge = getScoreBadge(candidate.atsScore)
-              
-              return (
-                <div
-                  key={candidate._id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                    {/* Rank & Score */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex-shrink-0 w-12 text-center">
-                        {index < 3 && filters.sortBy === 'atsScore' && filters.order === 'desc' ? (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
-                            <Star className="w-6 h-6 text-white fill-current" />
-                          </div>
-                        ) : (
-                          <div className="text-2xl font-bold text-gray-400">#{index + 1}</div>
-                        )}
+          <>
+            {/* Compare Bar */}
+            {selectedForCompare.length > 0 && (
+              <div className="mb-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <GitCompare className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">
+                    {selectedForCompare.length} candidate(s) selected for comparison
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCompare}
+                    disabled={selectedForCompare.length < 2}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Compare Now
+                  </button>
+                  <button
+                    onClick={() => setSelectedForCompare([])}
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-4">
+              {candidates.map((candidate, index) => {
+                const scoreBadge = getScoreBadge(candidate.atsScore)
+                const isSelected = selectedForCompare.includes(candidate._id)
+                
+                return (
+                  <div
+                    key={candidate._id}
+                    className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 ${
+                      isSelected ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                      {/* Compare Checkbox */}
+                      <div className="flex-shrink-0">
+                        <button
+                          onClick={() => toggleCompareSelection(candidate._id)}
+                          className="w-6 h-6 flex items-center justify-center text-blue-600 hover:text-blue-700"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-6 h-6" />
+                          ) : (
+                            <Square className="w-6 h-6" />
+                          )}
+                        </button>
                       </div>
 
-                      <div className={`flex-shrink-0 w-24 h-24 rounded-lg border-2 ${getScoreColor(candidate.atsScore)} flex flex-col items-center justify-center`}>
-                        <div className="text-3xl font-bold">{candidate.atsScore}</div>
-                        <div className="text-xs font-medium">ATS Score</div>
-                      </div>
-                    </div>
+                      {/* Rank & Score */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0 w-12 text-center">
+                          {index < 3 && filters.sortBy === 'atsScore' && filters.order === 'desc' ? (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                              <Star className="w-6 h-6 text-white fill-current" />
+                            </div>
+                          ) : (
+                            <div className="text-2xl font-bold text-gray-400">#{index + 1}</div>
+                          )}
+                        </div>
 
-                    {/* Candidate Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            {candidate.name}
-                          </h3>
-                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${scoreBadge.color} text-white`}>
-                            {scoreBadge.text}
-                          </div>
+                        <div className={`flex-shrink-0 w-24 h-24 rounded-lg border-2 ${getScoreColor(candidate.atsScore)} flex flex-col items-center justify-center`}>
+                          <div className="text-3xl font-bold">{candidate.atsScore}</div>
+                          <div className="text-xs font-medium">ATS Score</div>
                         </div>
                       </div>
+
+                      {/* Candidate Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-xl font-bold text-gray-900">
+                                {candidate.name}
+                              </h3>
+                              <button
+                                onClick={() => handleShortlistToggle(candidate._id, candidate.shortlisted)}
+                                className="text-yellow-400 hover:text-yellow-500 transition-colors"
+                              >
+                                <Star
+                                  className={`w-5 h-5 ${candidate.shortlisted ? 'fill-current' : ''}`}
+                                />
+                              </button>
+                            </div>
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${scoreBadge.color} text-white`}>
+                              {scoreBadge.text}
+                            </div>
+                          </div>
+
+                          {/* Status Dropdown */}
+                          <div className="ml-4">
+                            <select
+                              value={candidate.applicationStatus || 'Applied'}
+                              onChange={(e) => handleStatusChange(candidate._id, e.target.value)}
+                              disabled={updatingStatus[candidate._id]}
+                              className={`px-3 py-1.5 text-xs font-medium border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${getStatusColor(
+                                candidate.applicationStatus || 'Applied'
+                              )} ${updatingStatus[candidate._id] ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              <option value="Applied">Applied</option>
+                              <option value="Screening">Screening</option>
+                              <option value="Interview">Interview</option>
+                              <option value="Offer">Offer</option>
+                              <option value="Hired">Hired</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+                          </div>
+                        </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div className="flex items-center text-sm text-gray-600">
@@ -579,8 +761,186 @@ function RecruiterDashboard() {
               )
             })}
           </div>
+          </>
         )}
       </div>
+
+      {/* Compare Modal */}
+      {showCompareModal && comparisonData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Compare Candidates
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCompareModal(false)
+                  setComparisonData(null)
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Best Match Indicator */}
+              {comparisonData.bestMatch && (
+                <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Award className="w-6 h-6 text-green-600" />
+                    <div>
+                      <p className="font-semibold text-green-900">Best Match</p>
+                      <p className="text-sm text-green-700">
+                        {comparisonData.bestMatch.name} - {comparisonData.bestMatch.atsScore}% ATS Score
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Comparison Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Metric</th>
+                      {comparisonData.candidates.map((candidate) => (
+                        <th key={candidate._id} className="text-left py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-gray-900">{candidate.name}</span>
+                            {candidate._id === comparisonData.bestMatch?._id && (
+                              <span className="text-xs text-green-600 font-medium">★ Best Match</span>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100 bg-blue-50">
+                      <td className="py-3 px-4 font-medium text-gray-700">ATS Score</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          <span className={`font-bold text-lg ${
+                            candidate.atsScore >= 80 ? 'text-green-600' :
+                            candidate.atsScore >= 60 ? 'text-blue-600' :
+                            candidate.atsScore >= 40 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {candidate.atsScore}%
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Status</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                            candidate.applicationStatus || 'Applied'
+                          )}`}>
+                            {candidate.applicationStatus || 'Applied'}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Email</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4 text-sm text-gray-600">
+                          {candidate.email}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Experience</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4 text-sm text-gray-600">
+                          {candidate.totalExperience || 0} years
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Location</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4 text-sm text-gray-600">
+                          {candidate.currentLocation || 'N/A'}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Category</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                            {candidate.category}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Skills</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          <div className="flex flex-wrap gap-1">
+                            {candidate.extractedSkills?.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                                {skill}
+                              </span>
+                            ))}
+                            {candidate.extractedSkills?.length > 3 && (
+                              <span className="text-xs text-gray-500">
+                                +{candidate.extractedSkills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 font-medium text-gray-700">Shortlisted</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          {candidate.shortlisted ? (
+                            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                          ) : (
+                            <span className="text-gray-400 text-sm">No</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-gray-700">Actions</td>
+                      {comparisonData.candidates.map((candidate) => (
+                        <td key={candidate._id} className="py-3 px-4">
+                          <button
+                            onClick={() => {
+                              setShowCompareModal(false)
+                              navigate(`/recruiter/candidates/${candidate._id}`)
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
