@@ -283,10 +283,118 @@ const extractSkillsFromDescription = (description) => {
   return foundSkills.slice(0, 10);
 };
 
-export default {
-  fetchFromAdzuna,
-  getAllJobs,
-  getJobById,
-  createJob,
-  getJobStats
+/**
+ * Get recruiter's posted jobs
+ * GET /api/jobs/my-jobs
+ */
+export const getMyJobs = async (req, res) => {
+  try {
+    const recruiterId = req.user._id;
+
+    const jobs = await Job.find({
+      employer: recruiterId,
+      source: 'Manual'
+    })
+    .sort('-createdAt')
+    .populate('employer', 'name email companyName');
+
+    res.status(200).json({
+      success: true,
+      data: jobs,
+      count: jobs.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching jobs',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update job
+ * PUT /api/jobs/:id
+ */
+export const updateJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recruiterId = req.user._id;
+
+    const job = await Job.findOne({ _id: id, employer: recruiterId });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found or you do not have permission to edit'
+      });
+    }
+
+    // Update fields
+    const updateFields = [
+      'title', 'description', 'responsibilities', 'requiredSkills',
+      'experienceRequired', 'educationRequired', 'salaryRange',
+      'jobType', 'workMode', 'location', 'category', 'status'
+    ];
+
+    updateFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        job[field] = req.body[field];
+      }
+    });
+
+    await job.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Job updated successfully',
+      data: job
+    });
+
+  } catch (error) {
+    console.error('Error updating job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating job',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete job
+ * DELETE /api/jobs/:id
+ */
+export const deleteJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recruiterId = req.user._id;
+
+    const job = await Job.findOneAndDelete({
+      _id: id,
+      employer: recruiterId
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found or you do not have permission to delete'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Job deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting job',
+      error: error.message
+    });
+  }
 };

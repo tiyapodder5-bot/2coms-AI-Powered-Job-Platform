@@ -4,7 +4,10 @@ import {
   getAllJobs, 
   getJobById, 
   createJob, 
-  getJobStats 
+  getJobStats,
+  getMyJobs,
+  updateJob,
+  deleteJob
 } from '../controllers/job.controller.js';
 import { protect, employerOnly } from '../middleware/auth.js';
 
@@ -16,9 +19,14 @@ router.get('/fetch/adzuna', fetchFromAdzuna);
 // Public routes
 router.get('/', getAllJobs);
 router.get('/stats', getJobStats);
-router.get('/:id', getJobById);
 
 // Protected routes (employer only)
 router.post('/', protect, employerOnly, createJob);
+router.get('/my-jobs', protect, employerOnly, getMyJobs);
+router.put('/:id', protect, employerOnly, updateJob);
+router.delete('/:id', protect, employerOnly, deleteJob);
+
+// Must be last (dynamic route)
+router.get('/:id', getJobById);
 
 export default router;

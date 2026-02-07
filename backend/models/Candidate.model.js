@@ -101,6 +101,61 @@ const candidateSchema = new mongoose.Schema({
     default: false
   },
   
+  // Recruitment Status
+  applicationStatus: {
+    type: String,
+    enum: ['Applied', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'],
+    default: 'Applied'
+  },
+  
+  // Status History
+  statusHistory: [{
+    status: String,
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now
+    },
+    note: String
+  }],
+  
+  // Shortlist & Favorite
+  shortlisted: {
+    type: Boolean,
+    default: false
+  },
+  shortlistedAt: Date,
+  shortlistedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  
+  // Rejection
+  rejectionReason: String,
+  rejectedAt: Date,
+  
+  // Recruiter Notes
+  notes: [{
+    text: String,
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+  // Assigned Recruiter
+  assignedRecruiter: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  
   // Status
   status: {
     type: String,

@@ -1,6 +1,7 @@
 import Candidate from '../models/Candidate.model.js';
 import Conversation from '../models/Conversation.model.js';
 import Job from '../models/Job.model.js';
+import { sendStatusUpdateEmail, sendShortlistEmail } from '../utils/emailService.js';
 
 /**
  * Calculate ATS Score for a candidate
@@ -370,6 +371,302 @@ export const getFilterOptions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching filter options',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update candidate application status
+ * PUT /api/recruiter/candidates/:id/status
+ */
+export const updateCandidateStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, note } = req.body;
+    const recruiterId = req.user._id;
+    const recruiterName = req.user.name;
+
+    const candidate = await Candidate.findById(id);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found'
+      });
+    }
+
+    // Add to status history
+    candidate.statusHistory.push({
+      status: status,
+      changedBy: recruiterId,
+      changedAt: new Date(),
+      note: note || ''
+    });
+
+    // Update current status
+    candidate.applicationStatus = status;
+
+    // If rejected, save rejection date
+    if (status === 'Rejected' && note) {
+      candidate.rejectionReason = note;
+      candidate.rejectedAt = new Date();
+    }
+
+    await candidate.save();
+
+    // Send email notification (async, don't wait)
+    if (process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true') {
+      sendStatusUpdateEmail(candidate.email, candidate.name, status, recruiterName)
+        .catch(err => console.error('Email send failed:', err.message));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Status updated successfully',
+      data: candidate
+    });
+
+  } catch (error) {
+    console.error('Error updating status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Toggle shortlist candidate
+ * PUT /api/recruiter/candidates/:id/shortlist
+ */
+export const toggleShortlist = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recruiterId = req.user._id;
+    const recruiterName = req.user.name;
+
+    const candidate = await Candidate.findById(id);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found'
+      });
+    }
+
+    // Toggle shortlist
+    const wasShortlisted = candidate.shortlisted;
+    candidate.shortlisted = !candidate.shortlisted;
+    
+    if (candidate.shortlisted) {
+      candidate.shortlistedAt = new Date();
+      candidate.shortlistedBy = recruiterId;
+      
+      // Send shortlist email notification (async, don't wait)
+      if (process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true') {
+        sendShortlistEmail(candidate.email, candidate.name, recruiterName)
+          .catch(err => console.error('Email send failed:', err.message));
+      }
+    } else {
+      candidate.shortlistedAt = undefined;
+      candidate.shortlistedBy = undefined;
+    }
+
+    await candidate.save();
+
+    res.status(200).json({
+      success: true,
+      message: candidate.shortlisted ? 'Added to shortlist' : 'Removed from shortlist',
+      data: {
+        shortlisted: candidate.shortlisted
+      }
+    });
+
+  } catch (error) {
+    console.error('Error toggling shortlist:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error toggling shortlist',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Add note to candidate
+ * POST /api/recruiter/candidates/:id/notes
+ */
+export const addNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const recruiterId = req.user._id;
+
+    if (!text || text.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Note text is required'
+      });
+    }
+
+    const candidate = await Candidate.findById(id);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found'
+      });
+    }
+
+    candidate.notes.push({
+      text: text.trim(),
+      addedBy: recruiterId,
+      addedAt: new Date()
+    });
+
+    await candidate.save();
+
+    // Populate the added note
+    const populatedCandidate = await Candidate.findById(id)
+      .populate('notes.addedBy', 'name email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Note added successfully',
+      data: {
+        notes: populatedCandidate.notes
+      }
+    });
+
+  } catch (error) {
+    console.error('Error adding note:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding note',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get shortlisted candidates
+ * GET /api/recruiter/shortlisted
+ */
+export const getShortlistedCandidates = async (req, res) => {
+  try {
+    const candidates = await Candidate.find({
+      shortlisted: true,
+      status: 'Active'
+    })
+    .select('-resumeText -__v')
+    .populate('shortlistedBy', 'name email')
+    .sort('-shortlistedAt')
+    .lean();
+
+    // Calculate ATS scores
+    const candidatesWithScores = candidates.map(candidate => ({
+      ...candidate,
+      atsScore: calculateATSScore(candidate)
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: candidatesWithScores,
+      count: candidatesWithScores.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching shortlisted candidates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching shortlisted candidates',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Compare multiple candidates
+ * POST /api/recruiter/compare
+ */
+export const compareCandidates = async (req, res) => {
+  try {
+    const { candidateIds } = req.body;
+
+    if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide at least 2 candidate IDs to compare'
+      });
+    }
+
+    if (candidateIds.length > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'You can compare maximum 5 candidates at a time'
+      });
+    }
+
+    const candidates = await Candidate.find({
+      _id: { $in: candidateIds }
+    }).lean();
+
+    if (candidates.length !== candidateIds.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Some candidates not found'
+      });
+    }
+
+    // Calculate ATS scores and prepare comparison data
+    const comparison = candidates.map(candidate => {
+      const atsScore = calculateATSScore(candidate);
+      
+      return {
+        _id: candidate._id,
+        name: candidate.name,
+        email: candidate.email,
+        phone: candidate.phone,
+        category: candidate.category,
+        atsScore: atsScore,
+        totalExperience: candidate.totalExperience || 0,
+        skills: candidate.extractedSkills || [],
+        skillsCount: (candidate.extractedSkills || []).length,
+        education: candidate.education,
+        currentLocation: candidate.currentLocation,
+        expectedSalary: candidate.expectedSalary,
+        noticePeriod: candidate.noticePeriod,
+        applicationStatus: candidate.applicationStatus,
+        shortlisted: candidate.shortlisted || false,
+        chatbotCompleted: candidate.chatbotCompleted
+      };
+    });
+
+    // Sort by ATS score
+    comparison.sort((a, b) => b.atsScore - a.atsScore);
+
+    // Find best match
+    const bestMatch = comparison[0];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        candidates: comparison,
+        bestMatch: bestMatch,
+        comparisonSummary: {
+          highestScore: comparison[0].atsScore,
+          lowestScore: comparison[comparison.length - 1].atsScore,
+          averageExperience: Math.round(
+            comparison.reduce((sum, c) => sum + c.totalExperience, 0) / comparison.length
+          )
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error comparing candidates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error comparing candidates',
       error: error.message
     });
   }
