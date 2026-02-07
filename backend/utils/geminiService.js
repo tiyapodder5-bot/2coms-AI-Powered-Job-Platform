@@ -12,7 +12,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 export const parseResumeWithAI = async (resumeText) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 You are an expert ATS (Applicant Tracking System) resume parser. Analyze the following resume text and extract structured information.
@@ -77,7 +77,7 @@ Rules:
  */
 export const enhanceChatbotResponse = async (userMessage, context) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 You are a helpful job portal chatbot assistant. A candidate is asking a question during their job application process.
@@ -115,7 +115,7 @@ Provide a helpful, professional, and friendly response in 2-3 sentences. If the 
  */
 export const generateMatchExplanation = async (candidate, job) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 Analyze why this job is a good match for the candidate and provide a brief explanation.
@@ -157,7 +157,7 @@ Provide a 2-3 sentence explanation of why this job is a good match for the candi
  */
 export const analyzeJobDescription = async (jobDescription) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 Analyze this job description and extract key information.
@@ -206,7 +206,7 @@ Extract and return ONLY a valid JSON object (no markdown, no code blocks):
  */
 export const testGeminiConnection = async () => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent('Say "Hello, Gemini API is working!" in one sentence.');
     const response = await result.response;
     const text = response.text();
