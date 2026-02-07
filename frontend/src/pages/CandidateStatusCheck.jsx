@@ -252,12 +252,52 @@ function CandidateStatusCheck() {
               </div>
             </div>
 
+            {/* Recruiter Messages Section */}
+            {candidate.notes && candidate.notes.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+                  <h2 className="text-2xl font-bold mb-2">Messages from Recruiter</h2>
+                  <p className="text-purple-100">Updates and feedback from our recruitment team</p>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  {candidate.notes.map((note, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border-l-4 border-purple-500">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <span className="text-purple-600 font-bold text-sm">
+                            {note.addedBy?.name?.charAt(0).toUpperCase() || 'R'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold text-gray-900">
+                              {note.addedBy?.name || 'Recruiter'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(note.addedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed">{note.text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-4">
               <button
                 onClick={() => setCandidate(null)}
-                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              >
+                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                 Check Another Email
               </button>
               <button

@@ -140,16 +140,50 @@ function JobResults() {
           </h2>
 
           {matchedJobs.length === 0 ? (
-            <div className="card text-center py-12">
-              <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-lg text-gray-600">No matches found yet.</p>
-              <button 
-                onClick={() => navigate('/jobs')}
-                className="btn-primary mt-4"
-              >
-                Browse All Jobs
-              </button>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-xl overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                <CheckCircle className="w-12 h-12 mx-auto mb-3" />
+                <h3 className="text-2xl font-bold text-center">Thank You for Applying!</h3>
+              </div>
+              
+              <div className="p-8 text-center">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="bg-white rounded-lg p-6 shadow-md">
+                    <Target className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                    <p className="text-lg text-gray-800 font-semibold mb-2">
+                      Your Application is Under Review
+                    </p>
+                    <p className="text-gray-600 leading-relaxed">
+                      আপনার রিজিউম এবং সম্পূর্ণ তথ্য আমাদের কাছে পৌঁছেছে। আমাদের রিক্রুটার টিম আপনার প্রোফাইল যাচাই করছে এবং উপযুক্ত চাকরি খুঁজে পেলে আপনার সাথে যোগাযোগ করবে।
+                    </p>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-800 font-medium">✓ Resume Received</p>
+                    <p className="text-green-700 text-sm">✓ Profile Details Collected</p>
+                    <p className="text-green-700 text-sm">✓ Under Recruiter Review</p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-900">
+                      <strong>What's Next?</strong><br/>
+                      Our recruitment team will match your profile with suitable job openings and contact you soon.
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={() => navigate('/jobs')}
+                    className="btn-primary w-full mt-4"
+                  >
+                    Browse All Jobs
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ) : (
             matchedJobs.map((match, index) => (
               <motion.div

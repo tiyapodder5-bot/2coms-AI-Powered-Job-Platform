@@ -83,7 +83,8 @@ export const getCandidateStatusByEmail = async (req, res) => {
     const { email } = req.params;
 
     const candidate = await Candidate.findOne({ email: email.toLowerCase() })
-      .select('-resumeText -__v');
+      .select('-resumeText -__v')
+      .populate('notes.addedBy', 'name email');
 
     if (!candidate) {
       return res.status(404).json({
