@@ -74,7 +74,39 @@ export const getCandidateProfile = async (req, res) => {
   }
 };
 
+/**
+ * Get candidate status by email (Public - No auth required)
+ * GET /api/candidates/status/:email
+ */
+export const getCandidateStatusByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const candidate = await Candidate.findOne({ email: email.toLowerCase() })
+      .select('-resumeText -__v');
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'No application found with this email address. Please make sure you have applied by uploading your resume.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: candidate
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error checking application status',
+      error: error.message
+    });
+  }
+};
+
 export default {
   getAllCandidates,
-  getCandidateProfile
+  getCandidateProfile,
+  getCandidateStatusByEmail
 };

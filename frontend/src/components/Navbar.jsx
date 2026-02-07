@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Upload, Home, ListFilter, LogIn, LogOut, LayoutDashboard, Star, Briefcase } from 'lucide-react'
+import { Upload, Home, ListFilter, LogIn, LogOut, LayoutDashboard, Star, Briefcase, CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 function Navbar() {
@@ -51,13 +51,23 @@ function Navbar() {
             </Link>
 
             {!user && (
-              <Link 
-                to="/upload" 
-                className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                <Upload className="w-5 h-5" />
-                <span className="font-medium hidden md:inline">Upload Resume</span>
-              </Link>
+              <>
+                <Link 
+                  to="/check-status" 
+                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium hidden md:inline">Check Status</span>
+                </Link>
+                
+                <Link 
+                  to="/upload" 
+                  className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <Upload className="w-5 h-5" />
+                  <span className="font-medium hidden md:inline">Upload Resume</span>
+                </Link>
+              </>
             )}
 
             {user && (user.role === 'employer' || user.role === 'admin') && (

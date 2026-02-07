@@ -55,7 +55,7 @@ function ShortlistedCandidates() {
     try {
       const token = localStorage.getItem('token')
       await axios.put(
-        `${API_URL}/recruiter/${candidateId}/shortlist`,
+        `${API_URL}/recruiter/candidates/${candidateId}/shortlist`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )

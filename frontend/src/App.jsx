@@ -11,6 +11,7 @@ import RecruiterDashboard from './pages/RecruiterDashboard'
 import CandidateDetail from './pages/CandidateDetail'
 import JobPostForm from './pages/JobPostForm'
 import ShortlistedCandidates from './pages/ShortlistedCandidates'
+import CandidateStatusCheck from './pages/CandidateStatusCheck'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/jobs" element={<JobListing />} />
         <Route path="/jobs/:jobId" element={<JobDetails />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/check-status" element={<CandidateStatusCheck />} />
         <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
         <Route path="/recruiter/candidates/:id" element={<CandidateDetail />} />
         <Route path="/recruiter/jobs/new" element={<JobPostForm />} />

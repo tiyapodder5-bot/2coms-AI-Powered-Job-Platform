@@ -166,7 +166,7 @@ function RecruiterDashboard() {
     try {
       const token = localStorage.getItem('token')
       const response = await axios.put(
-        `${API_URL}/recruiter/${candidateId}/status`,
+        `${API_URL}/recruiter/candidates/${candidateId}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -192,7 +192,7 @@ function RecruiterDashboard() {
     try {
       const token = localStorage.getItem('token')
       const response = await axios.put(
-        `${API_URL}/recruiter/${candidateId}/shortlist`,
+        `${API_URL}/recruiter/candidates/${candidateId}/shortlist`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )

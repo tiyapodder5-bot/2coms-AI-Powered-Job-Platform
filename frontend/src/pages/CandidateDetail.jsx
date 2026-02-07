@@ -72,7 +72,7 @@ function CandidateDetail() {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       
       const response = await axios.post(
-        `${API_URL}/recruiter/${id}/notes`,
+        `${API_URL}/recruiter/candidates/${id}/notes`,
         { text: newNote },
         { headers: { Authorization: `Bearer ${token}` } }
       )
