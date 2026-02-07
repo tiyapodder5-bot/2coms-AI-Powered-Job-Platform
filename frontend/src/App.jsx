@@ -6,6 +6,9 @@ import ChatbotPage from './pages/ChatbotPage'
 import JobResults from './pages/JobResults'
 import JobListing from './pages/JobListing'
 import JobDetails from './pages/JobDetails'
+import Login from './pages/Login'
+import RecruiterDashboard from './pages/RecruiterDashboard'
+import CandidateDetail from './pages/CandidateDetail'
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
         <Route path="/results/:candidateId" element={<JobResults />} />
         <Route path="/jobs" element={<JobListing />} />
         <Route path="/jobs/:jobId" element={<JobDetails />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+        <Route path="/recruiter/candidates/:id" element={<CandidateDetail />} />
       </Routes>
     </div>
   )

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Upload, FileText, CheckCircle, Loader, AlertCircle } from 'lucide-react'
-import API_URL from '../config'
+import { API_URL } from '../config'
 
 function ResumeUpload() {
   const navigate = useNavigate()

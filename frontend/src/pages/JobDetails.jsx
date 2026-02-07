@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   Loader
 } from 'lucide-react'
-import API_URL from '../config'
+import { API_URL } from '../config'
 
 function JobDetails() {
   const { jobId } = useParams()

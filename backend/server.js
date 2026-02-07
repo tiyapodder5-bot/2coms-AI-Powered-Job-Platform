@@ -14,6 +14,7 @@ import chatbotRoutes from './routes/chatbot.routes.js';
 import jobRoutes from './routes/job.routes.js';
 import candidateRoutes from './routes/candidate.routes.js';
 import matchingRoutes from './routes/matching.routes.js';
+import recruiterRoutes from './routes/recruiter.routes.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -57,6 +58,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/matching', matchingRoutes);
+app.use('/api/recruiter', recruiterRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

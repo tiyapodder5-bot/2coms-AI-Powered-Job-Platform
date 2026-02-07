@@ -12,7 +12,7 @@ import {
   Search,
   Filter
 } from 'lucide-react'
-import API_URL from '../config'
+import { API_URL } from '../config'
 
 function JobListing() {
   const navigate = useNavigate()

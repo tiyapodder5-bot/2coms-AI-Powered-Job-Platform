@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Bot, User, Loader, CheckCircle, ArrowRight } from 'lucide-react'
-import API_URL from '../config'
+import { API_URL } from '../config'
 
 function ChatbotPage() {
   const { candidateId } = useParams()

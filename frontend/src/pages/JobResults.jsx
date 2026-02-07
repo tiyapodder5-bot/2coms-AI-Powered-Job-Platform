@@ -15,7 +15,7 @@ import {
   TrendingUp,
   ExternalLink
 } from 'lucide-react'
-import API_URL from '../config'
+import { API_URL } from '../config'
 
 function JobResults() {
   const { candidateId } = useParams()

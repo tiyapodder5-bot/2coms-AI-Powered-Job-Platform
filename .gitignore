@@ -36,8 +36,8 @@ backend/uploads/
 *.temp
 .cache/
 
-# Documentation (if you want to exclude)
-*.md
-!README.md
-!SETUP.md
+# Documentation (keep important docs)
+# *.md
+# !README.md
+# !SETUP.md
 
