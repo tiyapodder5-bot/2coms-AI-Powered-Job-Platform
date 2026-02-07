@@ -300,8 +300,98 @@ export const updateApplicationStatus = async (req, res) => {
   }
 };
 
+/**
+ * Apply for a specific job
+ * POST /api/matching/apply
+ */
+export const applyForJob = async (req, res) => {
+  try {
+    const { candidateId, jobId } = req.body;
+
+    // Validate inputs
+    if (!candidateId || !jobId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate ID and Job ID are required'
+      });
+    }
+
+    // Get candidate
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found'
+      });
+    }
+
+    // Get job
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    // Check if already applied
+    const existingApplication = await Application.findOne({
+      candidate: candidateId,
+      job: jobId
+    });
+
+    if (existingApplication) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already applied for this job',
+        data: existingApplication
+      });
+    }
+
+    // Calculate match score for this specific job
+    const { totalScore, scoreBreakdown } = calculateMatchScore(candidate, job);
+
+    // Create application
+    const application = new Application({
+      job: jobId,
+      candidate: candidateId,
+      matchScore: totalScore,
+      scoreBreakdown,
+      status: 'Applied',
+      autoSelected: false
+    });
+
+    await application.save();
+
+    // Update candidate's ATS score if this is better
+    if (!candidate.atsScore || totalScore > candidate.atsScore) {
+      candidate.atsScore = totalScore;
+      await candidate.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully! Our recruiter will review your profile and contact you soon.',
+      data: {
+        application,
+        matchScore: totalScore,
+        scoreBreakdown,
+        statusCheckInfo: 'You can check your application status anytime at /check-status using your email address'
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting application',
+      error: error.message
+    });
+  }
+};
+
 export default {
   getMatchedJobs,
   getAutoSelectedCandidates,
-  updateApplicationStatus
+  updateApplicationStatus,
+  applyForJob
 };

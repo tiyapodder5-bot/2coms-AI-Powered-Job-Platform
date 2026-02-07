@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import axios from 'axios'
-import { Upload, FileText, CheckCircle, Loader, AlertCircle } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Loader, AlertCircle, Sparkles } from 'lucide-react'
 import { API_URL } from '../config'
 
 function ResumeUpload() {
@@ -52,6 +52,9 @@ function ResumeUpload() {
         setResult(response.data.data)
         toast.success('Resume uploaded successfully! 🎉')
         
+        // Store candidate ID in localStorage for job applications
+        localStorage.setItem('candidateId', response.data.data.candidateId)
+        
         // Redirect to chatbot after 2 seconds
         setTimeout(() => {
           navigate(`/chatbot/${response.data.data.candidateId}`)
@@ -70,11 +73,15 @@ function ResumeUpload() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
+          <div className="inline-flex items-center space-x-2 bg-primary-100 text-primary-700 px-4 py-2 rounded-full mb-4">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-medium">Step 1 of 3: Upload Your Resume</span>
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Upload Your Resume
+            Start Your Job Search Journey
           </h1>
           <p className="text-lg text-gray-600">
-            Upload your resume (PDF or DOCX) and our AI will analyze it to match you with perfect jobs!
+            Upload your resume and our AI will analyze it to find your perfect job matches!
           </p>
         </div>
 

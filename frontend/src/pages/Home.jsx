@@ -44,8 +44,8 @@ function Home() {
                   onClick={() => navigate('/upload')}
                   className="btn-primary inline-flex items-center justify-center space-x-2 text-lg"
                 >
-                  <Upload className="w-5 h-5" />
-                  <span>Upload Resume & Get Started</span>
+                  <Sparkles className="w-5 h-5" />
+                  <span>Find Your Dream Job Now</span>
                 </button>
                 
                 <button
@@ -84,10 +84,10 @@ function Home() {
                 <Upload className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                1. Upload Resume
+                1. Share Your Profile
               </h3>
               <p className="text-gray-600">
-                Upload your resume (PDF/DOCX). Our AI extracts 30 keywords and detects your category automatically.
+                Upload your resume and answer quick questions. Our AI analyzes your profile to find perfect matches.
               </p>
             </motion.div>
 
@@ -191,13 +191,13 @@ function Home() {
             Ready to Find Your Perfect Job?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Upload your resume now and let our AI do the magic!
+            Start your job search journey today and let our AI do the magic!
           </p>
           <button
             onClick={() => navigate('/upload')}
             className="bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-bold hover:bg-gray-100 transition-colors inline-flex items-center space-x-2"
           >
-            <Upload className="w-6 h-6" />
+            <Sparkles className="w-6 h-6" />
             <span>Get Started Now - It's Free!</span>
           </button>
         </div>

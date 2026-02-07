@@ -11,7 +11,9 @@ import {
   Clock,
   ExternalLink,
   ArrowLeft,
-  Loader
+  Loader,
+  CheckCircle,
+  Mail
 } from 'lucide-react'
 import { API_URL } from '../config'
 
@@ -21,6 +23,8 @@ function JobDetails() {
 
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState(null)
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
 
   useEffect(() => {
     fetchJobDetails()
@@ -39,6 +43,41 @@ function JobDetails() {
       navigate('/jobs')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleApply = async () => {
+    // Check if candidate has uploaded resume
+    const candidateId = localStorage.getItem('candidateId')
+    
+    if (!candidateId) {
+      toast.error('Please upload your resume first to apply for jobs!')
+      navigate('/upload')
+      return
+    }
+
+    setApplying(true)
+
+    try {
+      const response = await axios.post(`${API_URL}/matching/apply`, {
+        candidateId,
+        jobId
+      })
+
+      if (response.data.success) {
+        setApplied(true)
+        toast.success(response.data.message, { duration: 5000 })
+      }
+    } catch (error) {
+      console.error('Apply error:', error)
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('already applied')) {
+        toast.error('You have already applied for this job!')
+        setApplied(true)
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to apply')
+      }
+    } finally {
+      setApplying(false)
     }
   }
 
@@ -124,17 +163,62 @@ function JobDetails() {
             </div>
           </div>
 
-          {job.externalUrl && (
-            <a
-              href={job.externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary w-full flex items-center justify-center space-x-2"
-            >
-              <span>Apply on Company Website</span>
-              <ExternalLink className="w-5 h-5" />
-            </a>
-          )}
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            {!applied ? (
+              <button
+                onClick={handleApply}
+                disabled={applying}
+                className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {applying ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    <span>Applying...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Apply Now</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 text-center">
+                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-lg font-bold text-green-900 mb-1">
+                  Successfully Applied! 🎉
+                </p>
+                <p className="text-sm text-green-700 mb-3">
+                  Our recruiter will review your profile and contact you soon.
+                </p>
+                <div className="bg-white rounded-lg p-3 flex items-center justify-center space-x-2">
+                  <Mail className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm text-gray-700">
+                    Check your application status anytime at{' '}
+                    <button
+                      onClick={() => navigate('/check-status')}
+                      className="text-blue-600 hover:text-blue-700 font-medium underline"
+                    >
+                      /check-status
+                    </button>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {job.externalUrl && (
+              <a
+                href={job.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary w-full flex items-center justify-center space-x-2"
+              >
+                <span>View on Company Website</span>
+                <ExternalLink className="w-5 h-5" />
+              </a>
+            )}
+          </div>
         </motion.div>
 
         {/* Job Description */}
