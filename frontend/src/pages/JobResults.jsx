@@ -158,7 +158,7 @@ function JobResults() {
                       Your Application is Under Review
                     </p>
                     <p className="text-gray-600 leading-relaxed">
-                      আপনার রিজিউম এবং সম্পূর্ণ তথ্য আমাদের কাছে পৌঁছেছে। আমাদের রিক্রুটার টিম আপনার প্রোফাইল যাচাই করছে এবং উপযুক্ত চাকরি খুঁজে পেলে আপনার সাথে যোগাযোগ করবে।
+                      Your resume and complete profile information have been successfully received. Our recruitment team is carefully reviewing your profile and will contact you once a suitable job opening matches your qualifications.
                     </p>
                   </div>
 
